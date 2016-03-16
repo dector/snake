@@ -1,0 +1,36 @@
+{
+
+  luxe:{
+    window: {
+      width:640,
+      height:480,
+      title:'snake',
+      fullscreen:false,
+      resizable:true,
+      borderless:false
+    }
+  },
+
+  project : {
+    name : 'snake',
+    version : '1.0.0',
+    author : '',
+
+    app : {
+      name : 'snake',
+      package : 'io.github.dector.snake'
+    },
+
+    build : {
+      dependencies : {
+        luxe : '*',
+      }
+    },
+
+    files : {
+      assets : 'assets/'
+    }
+
+  }
+
+}

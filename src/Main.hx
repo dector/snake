@@ -30,11 +30,17 @@ class Main extends luxe.Game {
 
     var level: Level;
 
+    var requestedDirection: Null<Direction>;
+
     override public function config(config: luxe.AppConfig) {
         return config;
     }
 
     override public function ready() {
+        createLevel();
+    }
+
+    private function createLevel() {
         level = new Level(20, 15);
         /*var apple = new Entity({
             name: APPLE_ENTITY
@@ -46,23 +52,21 @@ class Main extends luxe.Game {
         var pos = randomEmptyMapPosition();
         level.appleX = pos.x;
         level.appleY = pos.y;
+
+        moveTime = 0;
     }
 
     override public function onkeydown(event:KeyEvent) {
-        var newDirection: Direction = null;
         switch (event.keycode) {
             case Key.left:
-                newDirection = Direction.Left;
+                requestedDirection = Direction.Left;
             case Key.right:
-                newDirection = Direction.Right;
+                requestedDirection = Direction.Right;
             case Key.up:
-                newDirection = Direction.Up;
+                requestedDirection = Direction.Up;
             case Key.down:
-                newDirection = Direction.Down;
+                requestedDirection = Direction.Down;
         }
-
-        if (newDirection != null && canSnakeChangeDirectionTo(newDirection))
-            level.snake.direction = newDirection;
     }
 
     override public function onkeyup(e: KeyEvent) {
@@ -75,6 +79,10 @@ class Main extends luxe.Game {
             var position: Position = cast apple.get(POSITION_COMPONENT);
             position.x = new Random(Luxe.time).int(0, level.width());
             position.y = new Random(Luxe.time).int(0, level.height());*/
+        }
+
+        if (e.keycode == Key.key_r) {
+            createLevel();
         }
 
     }
@@ -118,6 +126,9 @@ class Main extends luxe.Game {
         } else {
             return;
         }
+
+        if (requestedDirection != null && canSnakeChangeDirectionTo(requestedDirection))
+            level.snake.direction = requestedDirection;
 
         var direction = level.snake.direction;
 

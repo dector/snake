@@ -20,7 +20,9 @@ class Main extends luxe.Game {
     private var SNAKE_HEAD_COLOR = new Color().rgb(0xff0000);
     private var SNAKE_BODY_COLOR = new Color().rgb(0x0000ff);
 
-    private var snakeSpeed = 0.2;
+    private var naturalSnakeSpeed = 0.2;
+    private var fastSnakeSpeed = 0.1;
+    private var snakeSpeed: Float;
     private var moveTime = 0.0;
 
     /*private static inline var APPLE_ENTITY = "apple";
@@ -54,6 +56,7 @@ class Main extends luxe.Game {
         level.appleY = pos.y;
 
         moveTime = 0;
+        snakeSpeed = naturalSnakeSpeed;
     }
 
     override public function onkeydown(event:KeyEvent) {
@@ -66,6 +69,8 @@ class Main extends luxe.Game {
                 requestedDirection = Direction.Up;
             case Key.down:
                 requestedDirection = Direction.Down;
+            case Key.space:
+                snakeSpeed = fastSnakeSpeed;
         }
     }
 
@@ -83,6 +88,8 @@ class Main extends luxe.Game {
 
         if (e.keycode == Key.key_r) {
             createLevel();
+        } else if (e.keycode == Key.space) {
+            snakeSpeed = naturalSnakeSpeed;
         }
 
     }

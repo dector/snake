@@ -1,9 +1,13 @@
 package ;
 
+import io.github.dector.snake.Segment;
+import io.github.dector.snake.Snake.Direction;
 import luxe.Color;
 import luxe.utils.Random;
 import io.github.dector.snake.Level;
 import luxe.Input;
+
+using io.github.dector.snake.Snake.DirectionUtils;
 
 class Main extends luxe.Game {
 
@@ -13,6 +17,11 @@ class Main extends luxe.Game {
 
     private var WALL_COLOR = new Color().rgb(0xffffff);
     private var APPLE_COLOR = new Color().rgb(0x00ff00);
+    private var SNAKE_HEAD_COLOR = new Color().rgb(0xff0000);
+    private var SNAKE_BODY_COLOR = new Color().rgb(0x0000ff);
+
+    private var snakeSpeed = 0.2;
+    private var moveTime = 0.0;
 
     /*private static inline var APPLE_ENTITY = "apple";
 
@@ -39,6 +48,23 @@ class Main extends luxe.Game {
         level.appleY = pos.y;
     }
 
+    override public function onkeydown(event:KeyEvent) {
+        var newDirection: Direction = null;
+        switch (event.keycode) {
+            case Key.left:
+                newDirection = Direction.Left;
+            case Key.right:
+                newDirection = Direction.Right;
+            case Key.up:
+                newDirection = Direction.Up;
+            case Key.down:
+                newDirection = Direction.Down;
+        }
+
+        if (newDirection != null && canSnakeChangeDirectionTo(newDirection))
+            level.snake.direction = newDirection;
+    }
+
     override public function onkeyup(e: KeyEvent) {
         if (e.keycode == Key.escape) {
             Luxe.shutdown();
@@ -49,17 +75,14 @@ class Main extends luxe.Game {
             var position: Position = cast apple.get(POSITION_COMPONENT);
             position.x = new Random(Luxe.time).int(0, level.width());
             position.y = new Random(Luxe.time).int(0, level.height());*/
-
-            var pos = randomEmptyMapPosition();
-            level.appleX = pos.x;
-            level.appleY = pos.y;
         }
 
     }
 
     private function randomEmptyMapPosition() {
         var pos = randomMapPosition();
-        while (level.get(pos.x, pos.y)) {
+        while (level.get(pos.x, pos.y) || level.snake.body.filter(
+            function(segment) { return segment.x == pos.x && segment.y == pos.y; }).length != 0) {
             pos = randomMapPosition();
         }
 
@@ -73,9 +96,81 @@ class Main extends luxe.Game {
         }
     }
 
+    private function canSnakeChangeDirectionTo(direction: Direction) {
+        var head = level.snake.body[0];
+        var newPosition = direction.forCoordinates(head.x, head.y);
+
+        return canSnakeMoveTo(newPosition.x, newPosition.y);
+    }
+
     override public function update(dt: Float) {
+        moveSnake(dt);
+
         drawMap();
         drawApple();
+        drawSnake();
+    }
+
+    private function moveSnake(dt: Float) {
+        moveTime += dt;
+        if (moveTime > snakeSpeed) {
+            moveTime -= snakeSpeed;
+        } else {
+            return;
+        }
+
+        var direction = level.snake.direction;
+
+        var snake = level.snake.body;
+
+        var prevX = snake[0].x;
+        var prevY = snake[0].y;
+
+        // move head
+        var newHeadX = prevX;
+        var newHeadY = prevY;
+        switch (direction) {
+            case Right:
+                newHeadX++;
+            case Left:
+                newHeadX--;
+            case Up:
+                newHeadY--;
+            case Down:
+                newHeadY++;
+        }
+        if (canSnakeMoveTo(newHeadX, newHeadY)) {
+            snake[0].x = newHeadX;
+            snake[0].y = newHeadY;
+
+            // Check if snake eats apple
+            if (newHeadX == level.appleX && newHeadY == level.appleY) {
+                var lastSegment = snake[snake.length-1];
+                var segmentPosition = level.snake.direction.forCoordinates(lastSegment.x, lastSegment.y);
+                snake.push(new Segment(segmentPosition.x, segmentPosition.y));
+
+                var pos = randomEmptyMapPosition();
+                level.appleX = pos.x;
+                level.appleY = pos.y;
+            }
+
+            for (i in 1...snake.length) {
+                var curX = snake[i].x;
+                var curY = snake[i].y;
+                snake[i].x = prevX;
+                snake[i].y = prevY;
+                prevX = curX;
+                prevY = curY;
+            }
+        } else {
+            // Die
+        }
+    }
+
+    private function canSnakeMoveTo(x: Int, y: Int) {
+        return !level.get(x, y)
+            && level.snake.body.filter(
+                function(segment) { return segment.x == x && segment.y == y; }).length == 0;
     }
 
     private function drawMap() {
@@ -94,6 +189,16 @@ class Main extends luxe.Game {
         drawPixel(position);*/
 
         drawPixel(level.appleX, level.appleY, APPLE_COLOR);
+    }
+
+    private function drawSnake() {
+        var snake = level.snake.body;
+
+        drawPixel(snake[0].x, snake[0].y, SNAKE_HEAD_COLOR);
+
+        for (i in 1...level.snake.body.length) {
+            drawPixel(snake[i].x, snake[i].y, SNAKE_BODY_COLOR);
+        }
     }
 
 //    private function drawPixel(position: Position) {

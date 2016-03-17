@@ -9,6 +9,8 @@ class Level {
     public var appleX: Int;
     public var appleY: Int;
 
+    public var snake: Snake;
+
     public function new(w: Int, h: Int) {
         map = new Array();
         this.w = w;
@@ -19,6 +21,11 @@ class Level {
                set(x, y, x == 0 || y == 0 || x == w-1 || y == h-1);
             }
         }
+
+        snake = new Snake();
+        var headX = Std.int(w / 2);
+        var headY = Std.int(h / 2);
+        snake.body = [ new Segment(headX, headY), new Segment(headX + 1, headY) ];
     }
 
     private function set(x: Int, y: Int, value: Bool) {

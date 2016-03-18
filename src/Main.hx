@@ -36,18 +36,15 @@ class Main extends luxe.Game {
     private var snakeSpeed: Float;
     private var moveTime = 0.0;
 
-    private var paused = false;
-
-    /*private static inline var APPLE_ENTITY = "apple";
-
-    private static inline var DRAWABLE_COMPONENT = "drawable";
-    private static inline var POSITION_COMPONENT = "position";*/
+    private var paused: Bool;
+    private var died: Bool;
 
     var level: Level;
 
     var requestedDirection: Null<Direction>;
 
     var pausedText: TextGeometry;
+    var diedText: TextGeometry;
 
     override public function config(config: luxe.AppConfig) {
         return config;
@@ -69,10 +66,18 @@ class Main extends luxe.Game {
         Luxe.input.bind_gamepad(INPUT_ACTION_UP, 12);
         Luxe.input.bind_gamepad(INPUT_ACTION_DOWN, 13);
         Luxe.input.bind_gamepad(INPUT_ACTION_SPEEDUP, 0);
-        Luxe.input.bind_gamepad(INPUT_ACTION_PAUSE, 9);
+        Luxe.input.bind_gamepad(INPUT_ACTION_PAUSE, 8);
+        Luxe.input.bind_gamepad(INPUT_ACTION_RESTART, 9);
 
         pausedText = Luxe.draw.text({
             text: "Paused",
+            align: TextAlign.center,
+            pos: Luxe.screen.mid,
+            visible: false
+        });
+
+        diedText = Luxe.draw.text({
+            text: "Game over",
             align: TextAlign.center,
             pos: Luxe.screen.mid,
             visible: false
@@ -83,12 +88,6 @@ class Main extends luxe.Game {
 
     private function createLevel() {
         level = new Level(20, 15);
-        /*var apple = new Entity({
-            name: APPLE_ENTITY
-        });
-
-        apple.add(new Position());
-        apple.add(new Drawable());*/
 
         var pos = randomEmptyMapPosition();
         level.appleX = pos.x;
@@ -97,6 +96,10 @@ class Main extends luxe.Game {
         moveTime = 0;
         snakeSpeed = naturalSnakeSpeed;
         level.snake.direction = Direction.Left;
+
+        requestedDirection = null;
+        paused = false;
+        died = false;
     }
 
     override public function oninputdown(name:String, e:InputEvent) {
@@ -112,7 +115,9 @@ class Main extends luxe.Game {
             case INPUT_ACTION_SPEEDUP:
                 snakeSpeed = naturalSnakeSpeed + fasterSnakeSpeed;
             case INPUT_ACTION_PAUSE:
-                paused = !paused;
+                if (!died) {
+                    paused = !paused;
+                }
             case INPUT_ACTION_RESTART:
                 createLevel();
         }
@@ -163,9 +168,13 @@ class Main extends luxe.Game {
         drawSnake();
 
         pausedText.visible = paused;
+        diedText.visible = died;
     }
 
     private function moveSnake(dt: Float) {
+        if (died)
+            return;
+
         if (paused) {
             return;
         }
@@ -224,7 +233,7 @@ class Main extends luxe.Game {
                 prevY = curY;
             }
         } else {
-            // Die
+            died = true;
         }
     }
 
@@ -245,10 +254,6 @@ class Main extends luxe.Game {
     }
 
     private function drawApple() {
-        /*var apple = Luxe.scene.entities.get(APPLE_ENTITY);
-        var position: Position = cast apple.get(POSITION_COMPONENT);
-        drawPixel(position);*/
-
         drawPixel(level.appleX, level.appleY, APPLE_COLOR);
     }
 
@@ -262,7 +267,6 @@ class Main extends luxe.Game {
         }
     }
 
-//    private function drawPixel(position: Position) {
     private function drawPixel(x: Int, y: Int, color: Color) {
         var levelW = level.width() * (PIXEL_SIZE + PIXEL_SPACING) + PIXEL_SPACING;
         var levelH = level.height() * (PIXEL_SIZE + PIXEL_SPACING) + PIXEL_SPACING;
@@ -274,8 +278,6 @@ class Main extends luxe.Game {
         var pixelY = y0 + y * (PIXEL_SIZE + PIXEL_SPACING) + PIXEL_SPACING;
 
         Luxe.draw.rectangle({
-            /*x: position.x * 8 + 1,
-            y: position.y * 8 + 1,*/
             immediate: true,
             x: pixelX,
             y: pixelY,
@@ -285,8 +287,6 @@ class Main extends luxe.Game {
         });
 
         Luxe.draw.box({
-            /*x: position.x * 8 + 1 + 1,
-            y: position.y * 8 + 1 + 1,*/
             immediate: true,
             x: pixelX + (PIXEL_SIZE - PIXEL_INNER_SIZE) / 2,
             y: pixelY + (PIXEL_SIZE - PIXEL_INNER_SIZE) / 2,

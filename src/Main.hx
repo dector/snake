@@ -22,7 +22,7 @@ class Main extends luxe.Game {
     private var SNAKE_BODY_COLOR = new Color().rgb(0xA36422);
 
     private var naturalSnakeSpeed = 0.2;
-    private var fastSnakeSpeed = 0.1;
+    private var fasterSnakeSpeed = -0.1;
     private var snakeSpeed: Float;
     private var moveTime = 0.0;
 
@@ -74,7 +74,7 @@ class Main extends luxe.Game {
             case Key.down:
                 requestedDirection = Direction.Down;
             case Key.space:
-                snakeSpeed = fastSnakeSpeed;
+                snakeSpeed = naturalSnakeSpeed + fasterSnakeSpeed;
         }
     }
 
@@ -95,7 +95,31 @@ class Main extends luxe.Game {
         } else if (e.keycode == Key.space) {
             snakeSpeed = naturalSnakeSpeed;
         }
+    }
 
+    override public function ongamepaddown(event:GamepadEvent) {
+        if (event.type == GamepadEventType.button) {
+            switch (event.button) {
+                case 14:
+                    requestedDirection = Direction.Left;
+                case 15:
+                    requestedDirection = Direction.Right;
+                case 12:
+                    requestedDirection = Direction.Up;
+                case 13:
+                    requestedDirection = Direction.Down;
+                case 0:
+                    snakeSpeed = naturalSnakeSpeed + fasterSnakeSpeed;
+            }
+        }
+    }
+
+    override public function ongamepadup(event:GamepadEvent) {
+        if (event.type == GamepadEventType.button) {
+            if (event.button == 0) {
+                snakeSpeed = naturalSnakeSpeed;
+            }
+        }
     }
 
     private function randomEmptyMapPosition() {

@@ -60,6 +60,7 @@ class Main extends luxe.Game {
 
         moveTime = 0;
         snakeSpeed = naturalSnakeSpeed;
+        level.snake.direction = Direction.Left;
     }
 
     override public function onkeydown(event:KeyEvent) {

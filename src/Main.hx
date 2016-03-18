@@ -1,5 +1,7 @@
 package ;
 
+import phoenix.geometry.TextGeometry;
+import luxe.Text;
 import io.github.dector.snake.Segment;
 import io.github.dector.snake.Snake.Direction;
 import luxe.Color;
@@ -26,6 +28,8 @@ class Main extends luxe.Game {
     private var snakeSpeed: Float;
     private var moveTime = 0.0;
 
+    private var paused = false;
+
     /*private static inline var APPLE_ENTITY = "apple";
 
     private static inline var DRAWABLE_COMPONENT = "drawable";
@@ -35,12 +39,21 @@ class Main extends luxe.Game {
 
     var requestedDirection: Null<Direction>;
 
+    var pausedText: TextGeometry;
+
     override public function config(config: luxe.AppConfig) {
         return config;
     }
 
     override public function ready() {
         Luxe.renderer.clear_color = BACKGROUND_COLOR;
+
+        pausedText = Luxe.draw.text({
+            text: "Paused",
+            align: TextAlign.center,
+            pos: Luxe.screen.mid,
+            visible: false
+        });
 
         createLevel();
     }
@@ -94,6 +107,8 @@ class Main extends luxe.Game {
             createLevel();
         } else if (e.keycode == Key.space) {
             snakeSpeed = naturalSnakeSpeed;
+        } else if (e.keycode == Key.key_p) {
+            paused = !paused;
         }
     }
 
@@ -110,6 +125,8 @@ class Main extends luxe.Game {
                     requestedDirection = Direction.Down;
                 case 0:
                     snakeSpeed = naturalSnakeSpeed + fasterSnakeSpeed;
+                case 9:
+                    paused = !paused;
             }
         }
     }
@@ -152,9 +169,15 @@ class Main extends luxe.Game {
         drawMap();
         drawApple();
         drawSnake();
+
+        pausedText.visible = paused;
     }
 
     private function moveSnake(dt: Float) {
+        if (paused) {
+            return;
+        }
+
         moveTime += dt;
         if (moveTime > snakeSpeed) {
             moveTime -= snakeSpeed;

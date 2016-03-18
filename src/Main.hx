@@ -17,6 +17,14 @@ class Main extends luxe.Game {
     private static inline var PIXEL_INNER_SIZE = 16;
     private static inline var PIXEL_SPACING = 4;
 
+    private static inline var INPUT_ACTION_LEFT = "left";
+    private static inline var INPUT_ACTION_RIGHT = "right";
+    private static inline var INPUT_ACTION_UP = "up";
+    private static inline var INPUT_ACTION_DOWN = "down";
+    private static inline var INPUT_ACTION_SPEEDUP = "speedup";
+    private static inline var INPUT_ACTION_PAUSE = "pause";
+    private static inline var INPUT_ACTION_RESTART = "restart";
+
     private var BACKGROUND_COLOR = new Color().rgb(0x2F484E);
     private var WALL_COLOR = new Color().rgb(0x1B2632);
     private var APPLE_COLOR = new Color().rgb(0xDF6F8A);
@@ -48,6 +56,21 @@ class Main extends luxe.Game {
     override public function ready() {
         Luxe.renderer.clear_color = BACKGROUND_COLOR;
 
+        Luxe.input.bind_key(INPUT_ACTION_LEFT, Key.left);
+        Luxe.input.bind_key(INPUT_ACTION_RIGHT, Key.right);
+        Luxe.input.bind_key(INPUT_ACTION_UP, Key.up);
+        Luxe.input.bind_key(INPUT_ACTION_DOWN, Key.down);
+        Luxe.input.bind_key(INPUT_ACTION_SPEEDUP, Key.space);
+        Luxe.input.bind_key(INPUT_ACTION_PAUSE, Key.key_p);
+        Luxe.input.bind_key(INPUT_ACTION_RESTART, Key.key_r);
+
+        Luxe.input.bind_gamepad(INPUT_ACTION_LEFT, 14);
+        Luxe.input.bind_gamepad(INPUT_ACTION_RIGHT, 15);
+        Luxe.input.bind_gamepad(INPUT_ACTION_UP, 12);
+        Luxe.input.bind_gamepad(INPUT_ACTION_DOWN, 13);
+        Luxe.input.bind_gamepad(INPUT_ACTION_SPEEDUP, 0);
+        Luxe.input.bind_gamepad(INPUT_ACTION_PAUSE, 9);
+
         pausedText = Luxe.draw.text({
             text: "Paused",
             align: TextAlign.center,
@@ -76,66 +99,35 @@ class Main extends luxe.Game {
         level.snake.direction = Direction.Left;
     }
 
-    override public function onkeydown(event:KeyEvent) {
-        switch (event.keycode) {
-            case Key.left:
+    override public function oninputdown(name:String, e:InputEvent) {
+        switch (name) {
+            case INPUT_ACTION_LEFT:
                 requestedDirection = Direction.Left;
-            case Key.right:
+            case INPUT_ACTION_RIGHT:
                 requestedDirection = Direction.Right;
-            case Key.up:
+            case INPUT_ACTION_UP:
                 requestedDirection = Direction.Up;
-            case Key.down:
+            case INPUT_ACTION_DOWN:
                 requestedDirection = Direction.Down;
-            case Key.space:
+            case INPUT_ACTION_SPEEDUP:
                 snakeSpeed = naturalSnakeSpeed + fasterSnakeSpeed;
+            case INPUT_ACTION_PAUSE:
+                paused = !paused;
+            case INPUT_ACTION_RESTART:
+                createLevel();
+        }
+    }
+
+    override public function oninputup(name:String, e:InputEvent) {
+        switch (name) {
+            case INPUT_ACTION_SPEEDUP:
+                snakeSpeed = naturalSnakeSpeed;
         }
     }
 
     override public function onkeyup(e: KeyEvent) {
         if (e.keycode == Key.escape) {
             Luxe.shutdown();
-        }
-
-        if (e.keycode == Key.space) {
-            /*var apple = Luxe.scene.entities.get(APPLE_ENTITY);
-            var position: Position = cast apple.get(POSITION_COMPONENT);
-            position.x = new Random(Luxe.time).int(0, level.width());
-            position.y = new Random(Luxe.time).int(0, level.height());*/
-        }
-
-        if (e.keycode == Key.key_r) {
-            createLevel();
-        } else if (e.keycode == Key.space) {
-            snakeSpeed = naturalSnakeSpeed;
-        } else if (e.keycode == Key.key_p) {
-            paused = !paused;
-        }
-    }
-
-    override public function ongamepaddown(event:GamepadEvent) {
-        if (event.type == GamepadEventType.button) {
-            switch (event.button) {
-                case 14:
-                    requestedDirection = Direction.Left;
-                case 15:
-                    requestedDirection = Direction.Right;
-                case 12:
-                    requestedDirection = Direction.Up;
-                case 13:
-                    requestedDirection = Direction.Down;
-                case 0:
-                    snakeSpeed = naturalSnakeSpeed + fasterSnakeSpeed;
-                case 9:
-                    paused = !paused;
-            }
-        }
-    }
-
-    override public function ongamepadup(event:GamepadEvent) {
-        if (event.type == GamepadEventType.button) {
-            if (event.button == 0) {
-                snakeSpeed = naturalSnakeSpeed;
-            }
         }
     }
 

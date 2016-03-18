@@ -15,10 +15,11 @@ class Main extends luxe.Game {
     private static inline var PIXEL_INNER_SIZE = 16;
     private static inline var PIXEL_SPACING = 4;
 
-    private var WALL_COLOR = new Color().rgb(0xffffff);
-    private var APPLE_COLOR = new Color().rgb(0x00ff00);
-    private var SNAKE_HEAD_COLOR = new Color().rgb(0xff0000);
-    private var SNAKE_BODY_COLOR = new Color().rgb(0x0000ff);
+    private var BACKGROUND_COLOR = new Color().rgb(0x2F484E);
+    private var WALL_COLOR = new Color().rgb(0x1B2632);
+    private var APPLE_COLOR = new Color().rgb(0xDF6F8A);
+    private var SNAKE_HEAD_COLOR = new Color().rgb(0xEB4701);
+    private var SNAKE_BODY_COLOR = new Color().rgb(0xA36422);
 
     private var naturalSnakeSpeed = 0.2;
     private var fastSnakeSpeed = 0.1;
@@ -39,6 +40,8 @@ class Main extends luxe.Game {
     }
 
     override public function ready() {
+        Luxe.renderer.clear_color = BACKGROUND_COLOR;
+
         createLevel();
     }
 

@@ -34,14 +34,17 @@ class Main extends luxe.Game {
     private static inline var SOUND_EAT = "assets/sounds/eat.wav";
     private static inline var SOUND_GAME_OVER = "assets/sounds/game_over.wav";
 
+    private static inline var STARTING_SNAKE_SPEED = 0.2;
+    private static inline var INCREMENT_SNAKE_SPEED_COEF = 0.95;
+
     private var BACKGROUND_COLOR = new Color().rgb(0x2F484E);
     private var WALL_COLOR = new Color().rgb(0x1B2632);
     private var APPLE_COLOR = new Color().rgb(0xDF6F8A);
     private var SNAKE_HEAD_COLOR = new Color().rgb(0xEB4701);
     private var SNAKE_BODY_COLOR = new Color().rgb(0xA36422);
 
-    private var naturalSnakeSpeed = 0.2;
-    private var fasterSnakeSpeed = -0.1;
+    private var naturalSnakeSpeed: Float;
+    private var speedUpCoef = 0.75;
     private var snakeSpeed: Float;
     private var moveTime = 0.0;
 
@@ -121,6 +124,7 @@ class Main extends luxe.Game {
         level.appleY = pos.y;
 
         moveTime = 0;
+        naturalSnakeSpeed = STARTING_SNAKE_SPEED;
         snakeSpeed = naturalSnakeSpeed;
         level.snake.direction = Direction.Left;
 
@@ -140,7 +144,7 @@ class Main extends luxe.Game {
             case INPUT_ACTION_DOWN:
                 requestedDirection = Direction.Down;
             case INPUT_ACTION_SPEEDUP:
-                snakeSpeed = naturalSnakeSpeed + fasterSnakeSpeed;
+                snakeSpeed = naturalSnakeSpeed * speedUpCoef;
             case INPUT_ACTION_PAUSE:
                 if (!died) {
                     paused = !paused;
@@ -245,6 +249,9 @@ class Main extends luxe.Game {
             // Check if snake eats apple
             if (newHeadX == level.appleX && newHeadY == level.appleY) {
                 Luxe.audio.play(eatAudio.source);
+
+                // Speed up snake
+                naturalSnakeSpeed *= INCREMENT_SNAKE_SPEED_COEF;
 
                 var lastSegment = snake[snake.length-1];
                 var segmentPosition = level.snake.direction.forCoordinates(lastSegment.x, lastSegment.y);

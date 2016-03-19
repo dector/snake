@@ -1,7 +1,9 @@
 package ;
 
+import luxe.Audio.AudioState;
 import luxe.resource.Resource.AudioResource;
 import luxe.Audio.AudioSource;
+import luxe.Audio.AudioHandle;
 import phoenix.geometry.TextGeometry;
 import luxe.Text;
 import io.github.dector.snake.Segment;
@@ -29,6 +31,9 @@ class Main extends luxe.Game {
 
     private static inline var MUSIC_TRACK1 = "assets/music/track1.ogg";
 
+    private static inline var SOUND_EAT = "assets/sounds/eat.wav";
+    private static inline var SOUND_GAME_OVER = "assets/sounds/game_over.wav";
+
     private var BACKGROUND_COLOR = new Color().rgb(0x2F484E);
     private var WALL_COLOR = new Color().rgb(0x1B2632);
     private var APPLE_COLOR = new Color().rgb(0xDF6F8A);
@@ -51,10 +56,16 @@ class Main extends luxe.Game {
     var diedText: TextGeometry;
 
     var musicAudio: AudioResource;
+    var musicHandle: AudioHandle;
+
+    var eatAudio: AudioResource;
+    var gameOverAudio: AudioResource;
 
     override public function config(config: luxe.AppConfig) {
         config.preload.sounds = [
-            { id: MUSIC_TRACK1, is_stream: true }
+            { id: MUSIC_TRACK1, is_stream: true },
+            { id: SOUND_EAT, is_stream: false },
+            { id: SOUND_GAME_OVER, is_stream: false }
         ];
         return config;
     }
@@ -62,7 +73,10 @@ class Main extends luxe.Game {
     override public function ready() {
         musicAudio = Luxe.resources.audio(MUSIC_TRACK1);
 
-        Luxe.audio.loop(musicAudio.source);
+        eatAudio = Luxe.resources.audio(SOUND_EAT);
+        gameOverAudio = Luxe.resources.audio(SOUND_GAME_OVER);
+
+        musicHandle = Luxe.audio.loop(musicAudio.source);
 
         Luxe.renderer.clear_color = BACKGROUND_COLOR;
 
@@ -132,6 +146,8 @@ class Main extends luxe.Game {
                     paused = !paused;
                 }
             case INPUT_ACTION_RESTART:
+                if (Luxe.audio.state_of(musicHandle) == AudioState.as_paused)
+                    Luxe.audio.unpause(musicHandle);
                 createLevel();
         }
     }
@@ -228,6 +244,8 @@ class Main extends luxe.Game {
 
             // Check if snake eats apple
             if (newHeadX == level.appleX && newHeadY == level.appleY) {
+                Luxe.audio.play(eatAudio.source);
+
                 var lastSegment = snake[snake.length-1];
                 var segmentPosition = level.snake.direction.forCoordinates(lastSegment.x, lastSegment.y);
                 snake.push(new Segment(segmentPosition.x, segmentPosition.y));
@@ -247,6 +265,8 @@ class Main extends luxe.Game {
             }
         } else {
             died = true;
+            Luxe.audio.pause(musicHandle);
+            Luxe.audio.play(gameOverAudio.source);
         }
     }
 

@@ -1,5 +1,6 @@
 package io.github.dector.snake;
 
+import luxe.Sprite;
 import luxe.States;
 import luxe.States.State;
 import luxe.options.StateOptions;
@@ -41,6 +42,7 @@ class PlayState extends luxe.State {
     private static inline var INPUT_ACTION_SLOWMO = "slowMo";
     private static inline var INPUT_ACTION_PAUSE = "pause";
     private static inline var INPUT_ACTION_RESTART = "restart";
+    private static inline var INPUT_ACTION_MUTE = "mute";
     private static inline var INPUT_ACTION_SELECT = "select";
 
     private static inline var STARTING_SNAKE_SPEED = 0.2;
@@ -73,6 +75,7 @@ class PlayState extends luxe.State {
     var requestedDirection: Null<Direction>;
 
     var applesText: TextGeometry;
+    var musicIndicator: Sprite;
 
     var musicAudio: AudioResource;
     var musicHandle: AudioHandle;
@@ -106,6 +109,7 @@ class PlayState extends luxe.State {
         Luxe.input.bind_key(INPUT_ACTION_PAUSE, Key.key_p);
         Luxe.input.bind_key(INPUT_ACTION_RESTART, Key.key_r);
         Luxe.input.bind_key(INPUT_ACTION_SELECT, Key.enter);
+        Luxe.input.bind_key(INPUT_ACTION_MUTE, Key.key_m);
 
         Luxe.input.bind_gamepad(INPUT_ACTION_LEFT, 14);
         Luxe.input.bind_gamepad(INPUT_ACTION_RIGHT, 15);
@@ -121,6 +125,15 @@ class PlayState extends luxe.State {
             pos: new Vector(30, 30),
             point_size: 18
         });
+
+        musicIndicator = new Sprite({
+            texture: Luxe.resources.texture(Assets.TEXTURE_MUSIC_ON),
+            size: new Vector(48, 48)
+        });
+        musicIndicator.pos = new Vector(
+            Luxe.screen.width - musicIndicator.size.x / 2,
+            musicIndicator.size.y / 2
+        );
 
         createLevel();
     }
@@ -171,7 +184,22 @@ class PlayState extends luxe.State {
     }
 
     public override function oninputdown(name: String, event:InputEvent) {
-        trace(name);
+        if (event.name == INPUT_ACTION_MUTE) {
+            var audioEnabled = !Luxe.audio.active;
+
+            musicIndicator.texture = audioEnabled
+            ? Luxe.resources.texture(Assets.TEXTURE_MUSIC_ON)
+            : Luxe.resources.texture(Assets.TEXTURE_MUSIC_OFF);
+
+            Luxe.audio.active = true; // To pause sounds correctly
+            if (audioEnabled) {
+                Luxe.audio.unpause(musicHandle);
+            } else {
+                Luxe.audio.pause(musicHandle);
+            }
+            Luxe.audio.active = audioEnabled;
+        }
+
         if (states.enabled(GameStates.PAUSE))
             return;
         if (states.enabled(GameStates.GAME_OVER))

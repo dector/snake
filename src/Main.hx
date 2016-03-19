@@ -1,5 +1,6 @@
 package ;
 
+import luxe.tween.Actuate;
 import luxe.Audio.AudioState;
 import luxe.resource.Resource.AudioResource;
 import luxe.Audio.AudioSource;
@@ -154,8 +155,9 @@ class Main extends luxe.Game {
                     paused = !paused;
                 }
             case INPUT_ACTION_RESTART:
-                if (Luxe.audio.state_of(musicHandle) == AudioState.as_paused)
-                    Luxe.audio.unpause(musicHandle);
+                if (died) {
+                    Actuate.update(function(volume: Float) { Luxe.audio.volume(musicHandle, volume); }, 1.0, [0.3], [1.0]);
+                }
                 createLevel();
         }
     }
@@ -278,7 +280,9 @@ class Main extends luxe.Game {
             }
         } else {
             died = true;
-            Luxe.audio.pause(musicHandle);
+
+            Actuate.update(function(volume: Float) { Luxe.audio.volume(musicHandle, volume); }, 1.0, [1.0], [0.3]);
+
             Luxe.audio.play(gameOverAudio.source);
         }
     }

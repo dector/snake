@@ -20,7 +20,7 @@ using io.github.dector.snake.Snake.DirectionUtils;
 
 class PlayState extends luxe.State {
 
-    private static inline var STYLE_2_ENABLED = true;
+    private static inline var STYLE_2_ENABLED = false;
 
     private static inline var PIXEL_SIZE_STYLE_1 = 32;
     private static inline var PIXEL_INNER_SIZE_STYLE_1 = 16;
@@ -31,7 +31,7 @@ class PlayState extends luxe.State {
 
     private static inline var PIXEL_SIZE = STYLE_2_ENABLED ? PIXEL_SIZE_STYLE_2 : PIXEL_SIZE_STYLE_1;
     private static inline var PIXEL_INNER_SIZE = STYLE_2_ENABLED ? PIXEL_SIZE_STYLE_2 : PIXEL_INNER_SIZE_STYLE_1;
-    private static inline var PIXEL_SPACING = STYLE_2_ENABLED ? PIXEL_SPACING_STYLE_2 : PIXEL_SIZE_STYLE_1;
+    private static inline var PIXEL_SPACING = STYLE_2_ENABLED ? PIXEL_SPACING_STYLE_2 : PIXEL_SPACING_STYLE_1;
 
     private static inline var INPUT_ACTION_LEFT = "left";
     private static inline var INPUT_ACTION_RIGHT = "right";
@@ -235,6 +235,9 @@ class PlayState extends luxe.State {
     }
 
     public override function onkeyup(e:KeyEvent) {
+        if (e.keycode == Key.key_u) {
+            paused = !paused; // For screenshot/debug purposes
+        }
         if (e.keycode == Key.escape) {
             Luxe.shutdown();
         }

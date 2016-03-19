@@ -51,6 +51,8 @@ class Main extends luxe.Game {
     private var paused: Bool;
     private var died: Bool;
 
+    private var speedingUp: Bool;
+
     var level: Level;
 
     var requestedDirection: Null<Direction>;
@@ -125,7 +127,8 @@ class Main extends luxe.Game {
 
         moveTime = 0;
         naturalSnakeSpeed = STARTING_SNAKE_SPEED;
-        snakeSpeed = naturalSnakeSpeed;
+        speedingUp = false;
+        updateSnakeSpeed();
         level.snake.direction = Direction.Left;
 
         requestedDirection = null;
@@ -144,7 +147,8 @@ class Main extends luxe.Game {
             case INPUT_ACTION_DOWN:
                 requestedDirection = Direction.Down;
             case INPUT_ACTION_SPEEDUP:
-                snakeSpeed = naturalSnakeSpeed * speedUpCoef;
+                speedingUp = true;
+                updateSnakeSpeed();
             case INPUT_ACTION_PAUSE:
                 if (!died) {
                     paused = !paused;
@@ -159,7 +163,8 @@ class Main extends luxe.Game {
     override public function oninputup(name:String, e:InputEvent) {
         switch (name) {
             case INPUT_ACTION_SPEEDUP:
-                snakeSpeed = naturalSnakeSpeed;
+                speedingUp = false;
+                updateSnakeSpeed();
         }
     }
 
@@ -252,6 +257,7 @@ class Main extends luxe.Game {
 
                 // Speed up snake
                 naturalSnakeSpeed *= INCREMENT_SNAKE_SPEED_COEF;
+                updateSnakeSpeed();
 
                 var lastSegment = snake[snake.length-1];
                 var segmentPosition = level.snake.direction.forCoordinates(lastSegment.x, lastSegment.y);
@@ -275,6 +281,12 @@ class Main extends luxe.Game {
             Luxe.audio.pause(musicHandle);
             Luxe.audio.play(gameOverAudio.source);
         }
+    }
+
+    private function updateSnakeSpeed() {
+        snakeSpeed = naturalSnakeSpeed;
+        if (speedingUp)
+            snakeSpeed *= speedUpCoef;
     }
 
     private function canSnakeMoveTo(x: Int, y: Int) {

@@ -259,7 +259,9 @@ class PlayState extends luxe.State {
 
     override public function update(dt: Float) {
         moveSnake(dt);
+    }
 
+    override public function onrender() {
         drawMap();
         drawApple();
         drawSnake();

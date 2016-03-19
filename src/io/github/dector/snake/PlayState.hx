@@ -34,10 +34,12 @@ class PlayState extends luxe.State {
     private static inline var INPUT_ACTION_SLOWMO = "slowMo";
     private static inline var INPUT_ACTION_PAUSE = "pause";
     private static inline var INPUT_ACTION_RESTART = "restart";
+    private static inline var INPUT_ACTION_SELECT = "select";
 
     private static inline var STARTING_SNAKE_SPEED = 0.2;
     private static inline var INCREMENT_SNAKE_SPEED_COEF = 0.95;
     private static inline var SLOWMO_SNAKE_SPEED = 0.6;
+    private static inline var SPEEDUP_SNAKE_SPEED = false;
 
     private static inline var GAMEPAD_SENSITIVITY = 0.2;
 
@@ -53,7 +55,6 @@ class PlayState extends luxe.State {
     private var moveTime = 0.0;
 
     private var paused: Bool;
-    private var died: Bool;
 
     private var speedingUp: Bool;
     private var slowMo: Bool;
@@ -64,17 +65,16 @@ class PlayState extends luxe.State {
 
     var requestedDirection: Null<Direction>;
 
-    var diedText: TextGeometry;
     var applesText: TextGeometry;
 
     var musicAudio: AudioResource;
     var musicHandle: AudioHandle;
 
     var eatAudio: AudioResource;
-    var gameOverAudio: AudioResource;
 
     var states: States;
     var pauseEventId: String;
+    var gameOverEventId: String;
 
     public function new(states: States) {
         super({ name: GameStates.PLAY });
@@ -85,7 +85,6 @@ class PlayState extends luxe.State {
         musicAudio = Luxe.resources.audio(Assets.MUSIC_TRACK1);
 
         eatAudio = Luxe.resources.audio(Assets.SOUND_EAT);
-        gameOverAudio = Luxe.resources.audio(Assets.SOUND_GAME_OVER);
 
         musicHandle = Luxe.audio.loop(musicAudio.source);
 
@@ -99,6 +98,7 @@ class PlayState extends luxe.State {
         Luxe.input.bind_key(INPUT_ACTION_SLOWMO, Key.key_x);
         Luxe.input.bind_key(INPUT_ACTION_PAUSE, Key.key_p);
         Luxe.input.bind_key(INPUT_ACTION_RESTART, Key.key_r);
+        Luxe.input.bind_key(INPUT_ACTION_SELECT, Key.enter);
 
         Luxe.input.bind_gamepad(INPUT_ACTION_LEFT, 14);
         Luxe.input.bind_gamepad(INPUT_ACTION_RIGHT, 15);
@@ -108,15 +108,7 @@ class PlayState extends luxe.State {
         Luxe.input.bind_gamepad(INPUT_ACTION_SLOWMO, 1);
         Luxe.input.bind_gamepad(INPUT_ACTION_PAUSE, 8);
         Luxe.input.bind_gamepad(INPUT_ACTION_RESTART, 9);
-
-        diedText = Luxe.draw.text({
-            text: "Game over",
-            align: TextAlign.center,
-            align_vertical: TextAlign.center,
-            pos: Luxe.screen.mid,
-            point_size: 40,
-            visible: false
-        });
+        Luxe.input.bind_gamepad(INPUT_ACTION_SELECT, 0);
 
         applesText = Luxe.draw.text({
             pos: new Vector(30, 30),
@@ -128,14 +120,27 @@ class PlayState extends luxe.State {
 
     override function onenter(_) {
         pauseEventId = Luxe.events.listen(StateEvents.STATE_EVENT_PAUSING, onPausing);
+        gameOverEventId = Luxe.events.listen(StateEvents.STATE_EVENT_GAME_OVER, onGameOver);
     }
 
     override function onleave(_) {
         Luxe.events.unlisten(pauseEventId);
+        Luxe.events.unlisten(gameOverEventId);
     }
 
     private function onPausing(e: { pausing: Bool }) {
         paused = e.pausing;
+    }
+
+    private function onGameOver(e: { showing: Bool }) {
+        paused = e.showing;
+
+        if (e.showing)
+            Actuate.update(function(volume: Float) { Luxe.audio.volume(musicHandle, volume); }, 1.0, [1.0], [0.3]);
+        else {
+            Actuate.update(function(volume: Float) { Luxe.audio.volume(musicHandle, volume); }, 1.0, [0.3], [1.0]);
+            createLevel();
+        }
     }
 
     private function createLevel() {
@@ -146,21 +151,23 @@ class PlayState extends luxe.State {
         level.appleY = pos.y;
 
         moveTime = 0;
-        naturalSnakeSpeed = STARTING_SNAKE_SPEED;
+        naturalSnakeSpeed = if (SPEEDUP_SNAKE_SPEED) STARTING_SNAKE_SPEED else 0.17;
         speedingUp = false;
         updateSnakeSpeed();
         level.snake.direction = Direction.Left;
 
         requestedDirection = null;
         paused = false;
-        died = false;
 
         eatenApples = 0;
         updateEatenApplesText();
     }
 
     public override function oninputdown(name: String, event:InputEvent) {
+        trace(name);
         if (states.enabled(GameStates.PAUSE))
+            return;
+        if (states.enabled(GameStates.GAME_OVER))
             return;
 
         switch (name) {
@@ -179,13 +186,8 @@ class PlayState extends luxe.State {
                 slowMo = true;
                 updateSnakeSpeed();
             case INPUT_ACTION_PAUSE:
-                if (!died) {
-                    states.enable(GameStates.PAUSE);
-                }
+                states.enable(GameStates.PAUSE);
             case INPUT_ACTION_RESTART:
-                if (died) {
-                    Actuate.update(function(volume: Float) { Luxe.audio.volume(musicHandle, volume); }, 1.0, [0.3], [1.0]);
-                }
                 createLevel();
         }
     }
@@ -209,7 +211,7 @@ class PlayState extends luxe.State {
         else event.value;*/
 
         if (calibratedValue > 0 && calibratedValue > GAMEPAD_SENSITIVITY
-        || calibratedValue < 0 && calibratedValue < -GAMEPAD_SENSITIVITY) {
+            || calibratedValue < 0 && calibratedValue < -GAMEPAD_SENSITIVITY) {
 
             if (e.axis == 0) {
                 if (calibratedValue < 0)
@@ -261,14 +263,9 @@ class PlayState extends luxe.State {
         drawMap();
         drawApple();
         drawSnake();
-
-        diedText.visible = died;
     }
 
     private function moveSnake(dt: Float) {
-        if (died)
-            return;
-
         if (paused) {
             return;
         }
@@ -317,8 +314,10 @@ class PlayState extends luxe.State {
                 Luxe.audio.play(eatAudio.source);
 
                 // Speed up snake
-                naturalSnakeSpeed *= INCREMENT_SNAKE_SPEED_COEF;
-                updateSnakeSpeed();
+                if (SPEEDUP_SNAKE_SPEED) {
+                    naturalSnakeSpeed *= INCREMENT_SNAKE_SPEED_COEF;
+                    updateSnakeSpeed();
+                }
 
                 updateEatenApplesText();
 
@@ -339,11 +338,7 @@ class PlayState extends luxe.State {
                 }
             }
         } else {
-            died = true;
-
-            Actuate.update(function(volume: Float) { Luxe.audio.volume(musicHandle, volume); }, 1.0, [1.0], [0.3]);
-
-            Luxe.audio.play(gameOverAudio.source);
+            states.enable(GameStates.GAME_OVER);
         }
     }
 

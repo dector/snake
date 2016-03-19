@@ -1,5 +1,6 @@
 package ;
 
+import io.github.dector.snake.GameOverState;
 import io.github.dector.snake.GameStates;
 import io.github.dector.snake.PauseState;
 import io.github.dector.snake.PlayState;
@@ -27,6 +28,7 @@ class Main extends luxe.Game {
 
         states.add(new PlayState(states));
         states.add(new PauseState(states));
+        states.add(new GameOverState(states));
 
         states.set(GameStates.PLAY);
     }

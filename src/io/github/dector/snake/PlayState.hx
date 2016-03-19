@@ -16,15 +16,22 @@ import phoenix.geometry.TextGeometry;
 import io.github.dector.snake.Snake.Direction;
 import luxe.Color;
 
-import Main;
-
 using io.github.dector.snake.Snake.DirectionUtils;
 
 class PlayState extends luxe.State {
 
-    private static inline var PIXEL_SIZE = 32;
-    private static inline var PIXEL_INNER_SIZE = 16;
-    private static inline var PIXEL_SPACING = 4;
+    private static inline var STYLE_2_ENABLED = true;
+
+    private static inline var PIXEL_SIZE_STYLE_1 = 32;
+    private static inline var PIXEL_INNER_SIZE_STYLE_1 = 16;
+    private static inline var PIXEL_SPACING_STYLE_1 = 4;
+
+    private static inline var PIXEL_SIZE_STYLE_2 = 24;
+    private static inline var PIXEL_SPACING_STYLE_2 = 6;
+
+    private static inline var PIXEL_SIZE = STYLE_2_ENABLED ? PIXEL_SIZE_STYLE_2 : PIXEL_SIZE_STYLE_1;
+    private static inline var PIXEL_INNER_SIZE = STYLE_2_ENABLED ? PIXEL_SIZE_STYLE_2 : PIXEL_INNER_SIZE_STYLE_1;
+    private static inline var PIXEL_SPACING = STYLE_2_ENABLED ? PIXEL_SPACING_STYLE_2 : PIXEL_SIZE_STYLE_1;
 
     private static inline var INPUT_ACTION_LEFT = "left";
     private static inline var INPUT_ACTION_RIGHT = "right";

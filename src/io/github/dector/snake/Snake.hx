@@ -32,4 +32,17 @@ class DirectionUtils {
                 { x: x, y: y+1 };
         }
     }
+
+    public static function opposite(direction: Direction) {
+        return switch (direction) {
+            case Direction.Left:
+                return Direction.Right;
+            case Direction.Right:
+                return Direction.Left;
+            case Direction.Up:
+                return Direction.Down;
+            case Direction.Down:
+                return Direction.Up;
+        }
+    }
 }

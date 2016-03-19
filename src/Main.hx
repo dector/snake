@@ -1,5 +1,6 @@
 package ;
 
+import luxe.Vector;
 import luxe.tween.Actuate;
 import luxe.Audio.AudioState;
 import luxe.resource.Resource.AudioResource;
@@ -54,12 +55,15 @@ class Main extends luxe.Game {
 
     private var speedingUp: Bool;
 
+    private var eatenApples: Int;
+
     var level: Level;
 
     var requestedDirection: Null<Direction>;
 
     var pausedText: TextGeometry;
     var diedText: TextGeometry;
+    var applesText: TextGeometry;
 
     var musicAudio: AudioResource;
     var musicHandle: AudioHandle;
@@ -107,6 +111,7 @@ class Main extends luxe.Game {
             align: TextAlign.center,
             align_vertical: TextAlign.center,
             pos: Luxe.screen.mid,
+            point_size: 40,
             visible: false
         });
 
@@ -115,7 +120,13 @@ class Main extends luxe.Game {
             align: TextAlign.center,
             align_vertical: TextAlign.center,
             pos: Luxe.screen.mid,
+            point_size: 40,
             visible: false
+        });
+
+        applesText = Luxe.draw.text({
+            pos: new Vector(30, 30),
+            point_size: 18
         });
 
         createLevel();
@@ -137,6 +148,9 @@ class Main extends luxe.Game {
         requestedDirection = null;
         paused = false;
         died = false;
+
+        eatenApples = 0;
+        updateEatenApplesText();
     }
 
     override public function oninputdown(name:String, e:InputEvent) {
@@ -255,23 +269,6 @@ class Main extends luxe.Game {
             snake[0].x = newHeadX;
             snake[0].y = newHeadY;
 
-            // Check if snake eats apple
-            if (newHeadX == level.appleX && newHeadY == level.appleY) {
-                Luxe.audio.play(eatAudio.source);
-
-                // Speed up snake
-                naturalSnakeSpeed *= INCREMENT_SNAKE_SPEED_COEF;
-                updateSnakeSpeed();
-
-                var lastSegment = snake[snake.length-1];
-                var segmentPosition = level.snake.direction.forCoordinates(lastSegment.x, lastSegment.y);
-                snake.push(new Segment(segmentPosition.x, segmentPosition.y));
-
-                var pos = randomEmptyMapPosition();
-                level.appleX = pos.x;
-                level.appleY = pos.y;
-            }
-
             for (i in 1...snake.length) {
                 var curX = snake[i].x;
                 var curY = snake[i].y;
@@ -279,6 +276,27 @@ class Main extends luxe.Game {
                 snake[i].y = prevY;
                 prevX = curX;
                 prevY = curY;
+            }
+
+            // Check if snake eats apple
+            if (newHeadX == level.appleX && newHeadY == level.appleY) {
+                eatenApples++;
+
+                Luxe.audio.play(eatAudio.source);
+
+                // Speed up snake
+                naturalSnakeSpeed *= INCREMENT_SNAKE_SPEED_COEF;
+                updateSnakeSpeed();
+
+                updateEatenApplesText();
+
+                var lastSegment = snake[snake.length-1];
+                var segmentPosition = level.snake.direction.opposite().forCoordinates(lastSegment.x, lastSegment.y);
+                snake.push(new Segment(segmentPosition.x, segmentPosition.y));
+
+                var pos = randomEmptyMapPosition();
+                level.appleX = pos.x;
+                level.appleY = pos.y;
             }
         } else {
             died = true;
@@ -293,6 +311,10 @@ class Main extends luxe.Game {
         snakeSpeed = naturalSnakeSpeed;
         if (speedingUp)
             snakeSpeed *= speedUpCoef;
+    }
+
+    private function updateEatenApplesText() {
+        applesText.text = 'Apples: $eatenApples';
     }
 
     private function canSnakeMoveTo(x: Int, y: Int) {

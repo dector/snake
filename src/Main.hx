@@ -20,6 +20,9 @@ class Main extends luxe.Game {
             { id: Assets.SOUND_EAT, is_stream: false },
             { id: Assets.SOUND_GAME_OVER, is_stream: false }
         ];
+        config.preload.textures = [
+            { id: Assets.TEXTURE_A_BUTTON }
+        ];
         return config;
     }
 

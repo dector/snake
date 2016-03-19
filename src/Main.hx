@@ -45,7 +45,7 @@ class Main extends luxe.Game {
     private var SNAKE_BODY_COLOR = new Color().rgb(0xA36422);
 
     private var naturalSnakeSpeed: Float;
-    private var speedUpCoef = 0.75;
+    private var speedUpCoef = 0.6;
     private var snakeSpeed: Float;
     private var moveTime = 0.0;
 
@@ -105,6 +105,7 @@ class Main extends luxe.Game {
         pausedText = Luxe.draw.text({
             text: "Paused",
             align: TextAlign.center,
+            align_vertical: TextAlign.center,
             pos: Luxe.screen.mid,
             visible: false
         });
@@ -112,6 +113,7 @@ class Main extends luxe.Game {
         diedText = Luxe.draw.text({
             text: "Game over",
             align: TextAlign.center,
+            align_vertical: TextAlign.center,
             pos: Luxe.screen.mid,
             visible: false
         });

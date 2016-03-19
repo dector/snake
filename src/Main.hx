@@ -39,6 +39,8 @@ class Main extends luxe.Game {
     private static inline var STARTING_SNAKE_SPEED = 0.2;
     private static inline var INCREMENT_SNAKE_SPEED_COEF = 0.95;
 
+    private static inline var GAMEPAD_SENSITIVITY = 0.2;
+
     private var BACKGROUND_COLOR = new Color().rgb(0x2F484E);
     private var WALL_COLOR = new Color().rgb(0x1B2632);
     private var APPLE_COLOR = new Color().rgb(0xDF6F8A);
@@ -178,6 +180,30 @@ class Main extends luxe.Game {
         }
     }
 
+    override public function ongamepadaxis(event:GamepadEvent) {
+        var calibratedValue = event.value;/*if (event.axis == 0)
+            event.value - gamepadAxisXCalibrated;
+        else if (event.axis == 1)
+            event.value - gamepadAxisYCalibrated;
+        else event.value;*/
+
+        if (calibratedValue > 0 && calibratedValue > GAMEPAD_SENSITIVITY
+            || calibratedValue < 0 && calibratedValue < -GAMEPAD_SENSITIVITY) {
+
+            if (event.axis == 0) {
+                if (calibratedValue < 0)
+                    requestedDirection = Direction.Left;
+                else
+                    requestedDirection = Direction.Right;
+            } else if (event.axis == 1) {
+                if (calibratedValue < 0)
+                    requestedDirection = Direction.Up;
+                else
+                    requestedDirection = Direction.Down;
+            }
+        }
+    }
+
     override public function oninputup(name:String, e:InputEvent) {
         switch (name) {
             case INPUT_ACTION_SPEEDUP:
@@ -242,8 +268,10 @@ class Main extends luxe.Game {
             return;
         }
 
-        if (requestedDirection != null && canSnakeChangeDirectionTo(requestedDirection))
+        if (requestedDirection != null && canSnakeChangeDirectionTo(requestedDirection)) {
             level.snake.direction = requestedDirection;
+            requestedDirection = null;
+        }
 
         var direction = level.snake.direction;
 

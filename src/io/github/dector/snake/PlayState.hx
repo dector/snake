@@ -1,5 +1,6 @@
 package io.github.dector.snake;
 
+import luxe.States;
 import luxe.States.State;
 import luxe.options.StateOptions;
 import luxe.tween.Actuate;
@@ -14,6 +15,8 @@ import luxe.resource.Resource.AudioResource;
 import phoenix.geometry.TextGeometry;
 import io.github.dector.snake.Snake.Direction;
 import luxe.Color;
+
+import Main;
 
 using io.github.dector.snake.Snake.DirectionUtils;
 
@@ -61,7 +64,6 @@ class PlayState extends luxe.State {
 
     var requestedDirection: Null<Direction>;
 
-    var pausedText: TextGeometry;
     var diedText: TextGeometry;
     var applesText: TextGeometry;
 
@@ -71,8 +73,12 @@ class PlayState extends luxe.State {
     var eatAudio: AudioResource;
     var gameOverAudio: AudioResource;
 
-    public function new(options:StateOptions) {
-        super(options);
+    var states: States;
+    var pauseEventId: String;
+
+    public function new(states: States) {
+        super({ name: GameStates.PLAY });
+        this.states = states;
     }
 
     public override function init() {
@@ -103,15 +109,6 @@ class PlayState extends luxe.State {
         Luxe.input.bind_gamepad(INPUT_ACTION_PAUSE, 8);
         Luxe.input.bind_gamepad(INPUT_ACTION_RESTART, 9);
 
-        pausedText = Luxe.draw.text({
-            text: "Paused",
-            align: TextAlign.center,
-            align_vertical: TextAlign.center,
-            pos: Luxe.screen.mid,
-            point_size: 40,
-            visible: false
-        });
-
         diedText = Luxe.draw.text({
             text: "Game over",
             align: TextAlign.center,
@@ -127,6 +124,18 @@ class PlayState extends luxe.State {
         });
 
         createLevel();
+    }
+
+    override function onenter(_) {
+        pauseEventId = Luxe.events.listen(StateEvents.STATE_EVENT_PAUSING, onPausing);
+    }
+
+    override function onleave(_) {
+        Luxe.events.unlisten(pauseEventId);
+    }
+
+    private function onPausing(e: { pausing: Bool }) {
+        paused = e.pausing;
     }
 
     private function createLevel() {
@@ -151,6 +160,9 @@ class PlayState extends luxe.State {
     }
 
     public override function oninputdown(name: String, event:InputEvent) {
+        if (states.enabled(GameStates.PAUSE))
+            return;
+
         switch (name) {
             case INPUT_ACTION_LEFT:
                 requestedDirection = Direction.Left;
@@ -168,7 +180,7 @@ class PlayState extends luxe.State {
                 updateSnakeSpeed();
             case INPUT_ACTION_PAUSE:
                 if (!died) {
-                    paused = !paused;
+                    states.enable(GameStates.PAUSE);
                 }
             case INPUT_ACTION_RESTART:
                 if (died) {
@@ -250,7 +262,6 @@ class PlayState extends luxe.State {
         drawApple();
         drawSnake();
 
-        pausedText.visible = paused;
         diedText.visible = died;
     }
 

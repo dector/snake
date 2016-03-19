@@ -1,5 +1,7 @@
 package ;
 
+import io.github.dector.snake.GameStates;
+import io.github.dector.snake.PauseState;
 import io.github.dector.snake.PlayState;
 import luxe.States;
 import io.github.dector.snake.Assets;
@@ -8,8 +10,6 @@ import io.github.dector.snake.Snake.Direction;
 using io.github.dector.snake.Snake.DirectionUtils;
 
 class Main extends luxe.Game {
-
-    public static inline var STATE_PLAY = "play";
 
     private var states: States;
 
@@ -25,11 +25,10 @@ class Main extends luxe.Game {
     override public function ready() {
         states = new States();
 
-        states.add(new PlayState({
-            name: STATE_PLAY
-        }));
+        states.add(new PlayState(states));
+        states.add(new PauseState(states));
 
-        states.set(STATE_PLAY);
+        states.set(GameStates.PLAY);
     }
 
 }

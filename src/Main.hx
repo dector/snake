@@ -1,5 +1,7 @@
 package ;
 
+import luxe.resource.Resource.AudioResource;
+import luxe.Audio.AudioSource;
 import phoenix.geometry.TextGeometry;
 import luxe.Text;
 import io.github.dector.snake.Segment;
@@ -25,6 +27,8 @@ class Main extends luxe.Game {
     private static inline var INPUT_ACTION_PAUSE = "pause";
     private static inline var INPUT_ACTION_RESTART = "restart";
 
+    private static inline var MUSIC_TRACK1 = "assets/music/track1.ogg";
+
     private var BACKGROUND_COLOR = new Color().rgb(0x2F484E);
     private var WALL_COLOR = new Color().rgb(0x1B2632);
     private var APPLE_COLOR = new Color().rgb(0xDF6F8A);
@@ -46,11 +50,20 @@ class Main extends luxe.Game {
     var pausedText: TextGeometry;
     var diedText: TextGeometry;
 
+    var musicAudio: AudioResource;
+
     override public function config(config: luxe.AppConfig) {
+        config.preload.sounds = [
+            { id: MUSIC_TRACK1, is_stream: true }
+        ];
         return config;
     }
 
     override public function ready() {
+        musicAudio = Luxe.resources.audio(MUSIC_TRACK1);
+
+        Luxe.audio.loop(musicAudio.source);
+
         Luxe.renderer.clear_color = BACKGROUND_COLOR;
 
         Luxe.input.bind_key(INPUT_ACTION_LEFT, Key.left);

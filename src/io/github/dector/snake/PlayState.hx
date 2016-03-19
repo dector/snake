@@ -150,6 +150,16 @@ class PlayState extends luxe.State {
 
     private function onPausing(e: { pausing: Bool }) {
         paused = e.pausing;
+
+        if (paused) {
+            Actuate.update(musicVolume, 1.5, [1.0], [0.3]);
+        } else {
+            Actuate.update(musicVolume, 1.5, [0.3], [1.0]);
+        }
+    }
+
+    private function musicVolume(volume: Float) {
+        Luxe.audio.volume(musicHandle, volume);
     }
 
     private function onGameOver(e: { showing: Bool }) {

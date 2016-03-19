@@ -28,6 +28,7 @@ class Main extends luxe.Game {
     private static inline var INPUT_ACTION_UP = "up";
     private static inline var INPUT_ACTION_DOWN = "down";
     private static inline var INPUT_ACTION_SPEEDUP = "speedup";
+    private static inline var INPUT_ACTION_SLOWMO = "slowMo";
     private static inline var INPUT_ACTION_PAUSE = "pause";
     private static inline var INPUT_ACTION_RESTART = "restart";
 
@@ -38,6 +39,7 @@ class Main extends luxe.Game {
 
     private static inline var STARTING_SNAKE_SPEED = 0.2;
     private static inline var INCREMENT_SNAKE_SPEED_COEF = 0.95;
+    private static inline var SLOWMO_SNAKE_SPEED = 0.6;
 
     private static inline var GAMEPAD_SENSITIVITY = 0.2;
 
@@ -56,6 +58,7 @@ class Main extends luxe.Game {
     private var died: Bool;
 
     private var speedingUp: Bool;
+    private var slowMo: Bool;
 
     private var eatenApples: Int;
 
@@ -97,6 +100,7 @@ class Main extends luxe.Game {
         Luxe.input.bind_key(INPUT_ACTION_UP, Key.up);
         Luxe.input.bind_key(INPUT_ACTION_DOWN, Key.down);
         Luxe.input.bind_key(INPUT_ACTION_SPEEDUP, Key.space);
+        Luxe.input.bind_key(INPUT_ACTION_SLOWMO, Key.key_x);
         Luxe.input.bind_key(INPUT_ACTION_PAUSE, Key.key_p);
         Luxe.input.bind_key(INPUT_ACTION_RESTART, Key.key_r);
 
@@ -105,6 +109,7 @@ class Main extends luxe.Game {
         Luxe.input.bind_gamepad(INPUT_ACTION_UP, 12);
         Luxe.input.bind_gamepad(INPUT_ACTION_DOWN, 13);
         Luxe.input.bind_gamepad(INPUT_ACTION_SPEEDUP, 0);
+        Luxe.input.bind_gamepad(INPUT_ACTION_SLOWMO, 1);
         Luxe.input.bind_gamepad(INPUT_ACTION_PAUSE, 8);
         Luxe.input.bind_gamepad(INPUT_ACTION_RESTART, 9);
 
@@ -168,6 +173,9 @@ class Main extends luxe.Game {
             case INPUT_ACTION_SPEEDUP:
                 speedingUp = true;
                 updateSnakeSpeed();
+            case INPUT_ACTION_SLOWMO:
+                slowMo = true;
+                updateSnakeSpeed();
             case INPUT_ACTION_PAUSE:
                 if (!died) {
                     paused = !paused;
@@ -208,6 +216,9 @@ class Main extends luxe.Game {
         switch (name) {
             case INPUT_ACTION_SPEEDUP:
                 speedingUp = false;
+                updateSnakeSpeed();
+            case INPUT_ACTION_SLOWMO:
+                slowMo = false;
                 updateSnakeSpeed();
         }
     }
@@ -263,7 +274,8 @@ class Main extends luxe.Game {
 
         moveTime += dt;
         if (moveTime > snakeSpeed) {
-            moveTime -= snakeSpeed;
+            while (moveTime > snakeSpeed)
+                moveTime -= snakeSpeed;
         } else {
             return;
         }
@@ -297,15 +309,6 @@ class Main extends luxe.Game {
             snake[0].x = newHeadX;
             snake[0].y = newHeadY;
 
-            for (i in 1...snake.length) {
-                var curX = snake[i].x;
-                var curY = snake[i].y;
-                snake[i].x = prevX;
-                snake[i].y = prevY;
-                prevX = curX;
-                prevY = curY;
-            }
-
             // Check if snake eats apple
             if (newHeadX == level.appleX && newHeadY == level.appleY) {
                 eatenApples++;
@@ -318,13 +321,21 @@ class Main extends luxe.Game {
 
                 updateEatenApplesText();
 
-                var lastSegment = snake[snake.length-1];
-                var segmentPosition = level.snake.direction.opposite().forCoordinates(lastSegment.x, lastSegment.y);
-                snake.push(new Segment(segmentPosition.x, segmentPosition.y));
+                // Tricky part. Add new segment right where head was
+                snake.insert(1, new Segment(prevX, prevY));
 
                 var pos = randomEmptyMapPosition();
                 level.appleX = pos.x;
                 level.appleY = pos.y;
+            } else {
+                for (i in 1...snake.length) {
+                    var curX = snake[i].x;
+                    var curY = snake[i].y;
+                    snake[i].x = prevX;
+                    snake[i].y = prevY;
+                    prevX = curX;
+                    prevY = curY;
+                }
             }
         } else {
             died = true;
@@ -337,6 +348,8 @@ class Main extends luxe.Game {
 
     private function updateSnakeSpeed() {
         snakeSpeed = naturalSnakeSpeed;
+        if (slowMo)
+            snakeSpeed = SLOWMO_SNAKE_SPEED;
         if (speedingUp)
             snakeSpeed *= speedUpCoef;
     }

@@ -57,6 +57,9 @@ class PlayState extends luxe.State {
     private var APPLE_COLOR = new Color().rgb(0xDF6F8A);
     private var SNAKE_HEAD_COLOR = new Color().rgb(0xEB4701);
     private var SNAKE_BODY_COLOR = new Color().rgb(0xA36422);
+    private var POWER_UP_SPEED_UP_COLOR = new Color().rgb(0xBD2633);
+    private var POWER_UP_SPEED_DOWN_COLOR = new Color().rgb(0x44881A);
+    private var POWER_UP_UNKNOWN_COLOR = new Color().rgb(0xB1DBEE);
 
     private var naturalSnakeSpeed: Float;
     private var speedUpCoef = 0.6;
@@ -283,8 +286,11 @@ class PlayState extends luxe.State {
 
     private function randomEmptyMapPosition() {
         var pos = randomMapPosition();
-        while (level.get(pos.x, pos.y) || level.snake.body.filter(
-            function(segment) { return segment.x == pos.x && segment.y == pos.y; }).length != 0) {
+        while (level.get(pos.x, pos.y)
+            || level.appleX == pos.x && level.appleY == pos.y
+            || level.powerUps.filter(function(p: Powerup) { return p.x == pos.x && p.y == pos.y; }).length != 0
+            || level.snake.body.filter(
+                function(segment) { return segment.x == pos.x && segment.y == pos.y; }).length != 0) {
             pos = randomMapPosition();
         }
 
@@ -311,6 +317,7 @@ class PlayState extends luxe.State {
 
     override public function onrender() {
         drawMap();
+        drawPowerUps();
         drawApple();
         drawSnake();
     }
@@ -326,6 +333,20 @@ class PlayState extends luxe.State {
                 moveTime -= snakeSpeed;
         } else {
             return;
+        }
+
+        // Generate powerups
+        var powerUpChance = 0.1;
+        if (level.powerUps.length == 0 && Luxe.utils.random.bool(powerUpChance)) {
+            var powerUp = new Powerup();
+
+            var position = randomEmptyMapPosition();
+            powerUp.x = position.x;
+            powerUp.y = position.y;
+
+            powerUp.timeToLive = 5.0;
+            powerUp.type = (Luxe.utils.random.bool(0.75)) ? Powerup.Type.SpeedUp(1.2) : Powerup.Type.SlowDown(1.2);
+            level.powerUps.push(powerUp);
         }
 
         if (requestedDirection != null && canSnakeChangeDirectionTo(requestedDirection)) {
@@ -391,6 +412,22 @@ class PlayState extends luxe.State {
                 lastSegment.x = prevX;
                 lastSegment.y = prevY;
                 snake.insert(1, lastSegment);
+
+                // Check powerups
+                var powerUpsToEat = level.powerUps.filter(function(p: Powerup) { return p.x == newHeadX && p.y == newHeadY; });
+                if (powerUpsToEat.length > 0) {
+                    var powerUp = powerUpsToEat[0];
+                    switch (powerUp.type) {
+                        case SpeedUp(speedUpFactor):
+                            naturalSnakeSpeed /= speedUpFactor;
+                            updateSnakeSpeed();
+                        case SlowDown(slowDownFactor):
+                            naturalSnakeSpeed *= slowDownFactor;
+                            updateSnakeSpeed();
+                    }
+
+                    level.powerUps.remove(powerUp);
+                }
             }
         } else {
             states.enable(GameStates.GAME_OVER);
@@ -422,6 +459,24 @@ class PlayState extends luxe.State {
                     drawPixel(x, y, WALL_COLOR);
                 }
             }
+        }
+    }
+
+    private function drawPowerUps() {
+        var powerUps = level.powerUps;
+        if (powerUps.length == 0)
+            return;
+
+        for (i in 0...powerUps.length) {
+            var color = switch (powerUps[i].type) {
+                case SpeedUp(_):
+                    POWER_UP_SPEED_UP_COLOR;
+                case SlowDown(_):
+                    POWER_UP_SPEED_DOWN_COLOR;
+                default:
+                    POWER_UP_UNKNOWN_COLOR;
+            }
+            drawPixel(powerUps[i].x, powerUps[i].y, color);
         }
     }
 

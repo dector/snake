@@ -378,14 +378,19 @@ class PlayState extends luxe.State {
                 level.appleX = pos.x;
                 level.appleY = pos.y;
             } else {
-                for (i in 1...snake.length) {
-                    var curX = snake[i].x;
-                    var curY = snake[i].y;
-                    snake[i].x = prevX;
-                    snake[i].y = prevY;
-                    prevX = curX;
-                    prevY = curY;
-                }
+                var lastSegmentIndex = snake.length - 1;
+                var lastSegment = snake[lastSegmentIndex];
+                snake.remove(lastSegment);
+
+                // Snake before movement:     [H] [1] [2] [3] [4] [5]
+                //                         +---+                   |
+                //                         |                       |
+                //                         |   +-------------------+
+                //                         v   v
+                // Snake after movement:  [H] [5] [1] [2] [3] [4]
+                lastSegment.x = prevX;
+                lastSegment.y = prevY;
+                snake.insert(1, lastSegment);
             }
         } else {
             states.enable(GameStates.GAME_OVER);

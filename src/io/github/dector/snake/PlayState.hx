@@ -89,6 +89,11 @@ class PlayState extends luxe.State {
     var pauseEventId: String;
     var gameOverEventId: String;
 
+    var powerUpColor: Color;
+    var powerUpBlinkingTime: Float;
+    var powerUpDeadTime: Float;
+    var powerUpBlinking: Bool;
+
     public function new(states: States) {
         super({ name: GameStates.PLAY });
         this.states = states;
@@ -336,7 +341,7 @@ class PlayState extends luxe.State {
         }
 
         // Generate powerups
-        var powerUpChance = 0.1;
+        var powerUpChance = 1;//0.1;
         if (level.powerUps.length == 0 && Luxe.utils.random.bool(powerUpChance)) {
             var powerUp = new Powerup();
 
@@ -347,6 +352,37 @@ class PlayState extends luxe.State {
             powerUp.timeToLive = 5.0;
             powerUp.type = (Luxe.utils.random.bool(0.75)) ? Powerup.Type.SpeedUp(1.2) : Powerup.Type.SlowDown(1.2);
             level.powerUps.push(powerUp);
+
+            powerUpColor = switch (powerUp.type) {
+                case SpeedUp(_):
+                    POWER_UP_SPEED_UP_COLOR.clone();
+                case SlowDown(_):
+                    POWER_UP_SPEED_DOWN_COLOR.clone();
+                default:
+                    POWER_UP_UNKNOWN_COLOR.clone();
+            };
+            powerUpDeadTime = Luxe.time + powerUp.timeToLive;
+            trace(Luxe.time);
+            trace(powerUp.timeToLive);
+            powerUpBlinkingTime = powerUpDeadTime - 2; // 2 sec before
+            powerUpBlinking = false;
+        }
+        if (level.powerUps.length != 0) {
+            var powerUp = level.powerUps[0];
+
+            if (Luxe.time > powerUpBlinkingTime && !powerUpBlinking) {
+                Actuate.tween(powerUpColor, 0.2, { a: 0.5 }).repeat().reflect();
+                powerUpBlinking = true;
+            }
+            if (Luxe.time > powerUpDeadTime) {
+                level.powerUps.remove(powerUp);
+                Actuate.stop(powerUpColor);
+
+                powerUpDeadTime = 0;
+                powerUpBlinkingTime = 0;
+                powerUpBlinking = false;
+                powerUpColor = null;
+            }
         }
 
         if (requestedDirection != null && canSnakeChangeDirectionTo(requestedDirection)) {
@@ -468,15 +504,7 @@ class PlayState extends luxe.State {
             return;
 
         for (i in 0...powerUps.length) {
-            var color = switch (powerUps[i].type) {
-                case SpeedUp(_):
-                    POWER_UP_SPEED_UP_COLOR;
-                case SlowDown(_):
-                    POWER_UP_SPEED_DOWN_COLOR;
-                default:
-                    POWER_UP_UNKNOWN_COLOR;
-            }
-            drawPixel(powerUps[i].x, powerUps[i].y, color);
+            drawPixel(powerUps[i].x, powerUps[i].y, powerUpColor);
         }
     }
 

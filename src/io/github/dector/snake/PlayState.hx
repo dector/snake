@@ -415,39 +415,12 @@ class PlayState extends luxe.State {
             snake[0].y = newHeadY;
 
             // Check if snake eats apple
-            if (newHeadX == level.appleX && newHeadY == level.appleY) {
-                eatenApples++;
-
+            if (isSnakeEatsApple(newHeadX, newHeadY)) {
                 Luxe.audio.play(eatAudio.source);
 
-                // Speed up snake
-                if (SPEEDUP_SNAKE_SPEED) {
-                    naturalSnakeSpeed *= INCREMENT_SNAKE_SPEED_COEF;
-                    updateSnakeSpeed();
-                }
-
-                updateEatenApplesText();
-
-                // Tricky part. Add new segment right where head was
-                snake.insert(1, new Segment(prevX, prevY));
-
-                var pos = randomEmptyMapPosition();
-                level.appleX = pos.x;
-                level.appleY = pos.y;
+                performEatApple(prevX, prevY);
             } else {
-                var lastSegmentIndex = snake.length - 1;
-                var lastSegment = snake[lastSegmentIndex];
-                snake.remove(lastSegment);
-
-                // Snake before movement:     [H] [1] [2] [3] [4] [5]
-                //                         +---+                   |
-                //                         |                       |
-                //                         |   +-------------------+
-                //                         v   v
-                // Snake after movement:  [H] [5] [1] [2] [3] [4]
-                lastSegment.x = prevX;
-                lastSegment.y = prevY;
-                snake.insert(1, lastSegment);
+                performSnakeMove(prevX, prevY);
 
                 // Check powerups
                 var powerUpsToEat = level.powerUps.filter(function(p: Powerup) { return p.x == newHeadX && p.y == newHeadY; });
@@ -468,6 +441,47 @@ class PlayState extends luxe.State {
         } else {
             states.enable(GameStates.GAME_OVER);
         }
+    }
+
+    private function isSnakeEatsApple(headX: Int, headY: Int) {
+        return headX == level.appleX && headY == level.appleY;
+    }
+
+    private function performEatApple(headX: Int, headY: Int) {
+        eatenApples++;
+
+        // Speed up snake
+        if (SPEEDUP_SNAKE_SPEED) {
+            naturalSnakeSpeed *= INCREMENT_SNAKE_SPEED_COEF;
+            updateSnakeSpeed();
+        }
+
+        updateEatenApplesText();
+
+        // Tricky part. Add new segment right where head was
+        level.snake.body.insert(1, new Segment(headX, headY));
+
+        var pos = randomEmptyMapPosition();
+        level.appleX = pos.x;
+        level.appleY = pos.y;
+    }
+
+    private function performSnakeMove(prevX: Int, prevY: Int) {
+        var snake = level.snake.body;
+
+        var lastSegmentIndex = snake.length - 1;
+        var lastSegment = snake[lastSegmentIndex];
+        snake.remove(lastSegment);
+
+        // Snake before movement:     [H] [1] [2] [3] [4] [5]
+        //                         +---+                   |
+        //                         |                       |
+        //                         |   +-------------------+
+        //                         v   v
+        // Snake after movement:  [H] [5] [1] [2] [3] [4]
+        lastSegment.x = prevX;
+        lastSegment.y = prevY;
+        snake.insert(1, lastSegment);
     }
 
     private function updateSnakeSpeed() {

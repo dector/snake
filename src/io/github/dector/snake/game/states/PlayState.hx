@@ -1,6 +1,15 @@
-package io.github.dector.snake;
+package io.github.dector.snake.game.states;
+
+import io.github.dector.snake.model.Segment;
+import io.github.dector.snake.resources.Assets;
+import io.github.dector.snake.model.Powerup;
+import io.github.dector.snake.model.Snake;
+import io.github.dector.snake.model.Level;
+import io.github.dector.snake.model.Snake.Direction;
+import io.github.dector.snake.model.PowerupType;
 
 import luxe.Sprite;
+import luxe.Color;
 import luxe.States;
 import luxe.States.State;
 import luxe.options.StateOptions;
@@ -14,10 +23,8 @@ import luxe.Input.KeyEvent;
 import luxe.Audio.AudioHandle;
 import luxe.resource.Resource.AudioResource;
 import phoenix.geometry.TextGeometry;
-import io.github.dector.snake.Snake.Direction;
-import luxe.Color;
 
-using io.github.dector.snake.Snake.DirectionUtils;
+using io.github.dector.snake.model.Snake.DirectionUtils;
 
 class PlayState extends luxe.State {
 
@@ -350,7 +357,7 @@ class PlayState extends luxe.State {
             powerUp.y = position.y;
 
             powerUp.timeToLive = 5.0;
-            powerUp.type = (Luxe.utils.random.bool(0.75)) ? Powerup.Type.SpeedUp(1.2) : Powerup.Type.SlowDown(1.2);
+            powerUp.type = (Luxe.utils.random.bool(0.75)) ? PowerupType.SpeedUp(1.2) : PowerupType.SlowDown(1.2);
             level.powerUps.push(powerUp);
 
             powerUpColor = switch (powerUp.type) {

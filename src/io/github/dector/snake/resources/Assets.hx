@@ -1,4 +1,4 @@
-package io.github.dector.snake;
+package io.github.dector.snake.resources;
 
 class Assets {
 

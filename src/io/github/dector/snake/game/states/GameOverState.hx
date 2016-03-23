@@ -1,5 +1,6 @@
-package io.github.dector.snake;
+package io.github.dector.snake.game.states;
 
+import io.github.dector.snake.resources.Assets;
 import luxe.tween.Actuate;
 import luxe.Text.TextAlign;
 import luxe.resource.Resource.AudioResource;

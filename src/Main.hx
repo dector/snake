@@ -1,14 +1,15 @@
 package ;
 
-import io.github.dector.snake.GameOverState;
-import io.github.dector.snake.GameStates;
-import io.github.dector.snake.PauseState;
-import io.github.dector.snake.PlayState;
+import io.github.dector.snake.model.Snake;
+import io.github.dector.snake.game.states.GameOverState;
+import io.github.dector.snake.game.states.GameStates;
+import io.github.dector.snake.game.states.PauseState;
+import io.github.dector.snake.game.states.PlayState;
 import luxe.States;
-import io.github.dector.snake.Assets;
-import io.github.dector.snake.Snake.Direction;
+import io.github.dector.snake.resources.Assets;
+import io.github.dector.snake.model.Snake.Direction;
 
-using io.github.dector.snake.Snake.DirectionUtils;
+using io.github.dector.snake.model.Snake.DirectionUtils;
 
 class Main extends luxe.Game {
 

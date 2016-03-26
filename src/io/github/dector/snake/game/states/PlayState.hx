@@ -1,5 +1,7 @@
 package io.github.dector.snake.game.states;
 
+import io.github.dector.snake.game.behaviors.Behaviors;
+import io.github.dector.snake.game.behaviors.PowerUpBehavior;
 import io.github.dector.snake.game.components.DrawableComponent;
 import io.github.dector.snake.game.entities.Entities;
 import luxe.Entity;
@@ -76,8 +78,6 @@ class PlayState extends luxe.State {
     private var snakeSpeed: Float;
     private var moveTime = 0.0;
 
-    private var paused: Bool;
-
     private var speedingUp: Bool;
     private var slowMo: Bool;
 
@@ -100,11 +100,9 @@ class PlayState extends luxe.State {
     var gameOverEventId: String;
 
     var powerUpColor: Color;
-    var powerUpBlinkingTime: Float;
-    var powerUpDeadTime: Float;
-    var powerUpBlinking: Bool;
 
     var drawableContext = new Context();
+    var updateContext = new UpdateContext();
 
     public function new(states: States) {
         super({ name: GameStates.PLAY });
@@ -169,9 +167,9 @@ class PlayState extends luxe.State {
     }
 
     private function onPausing(e: { pausing: Bool }) {
-        paused = e.pausing;
+        updateContext.paused = e.pausing;
 
-        if (paused) {
+        if (updateContext.paused) {
             Actuate.update(musicVolume, 1.5, [1.0], [0.3]);
         } else {
             Actuate.update(musicVolume, 1.5, [0.3], [1.0]);
@@ -183,7 +181,7 @@ class PlayState extends luxe.State {
     }
 
     private function onGameOver(e: { showing: Bool }) {
-        paused = e.showing;
+        updateContext.paused = e.showing;
 
         if (e.showing)
             Actuate.update(function(volume: Float) { Luxe.audio.volume(musicHandle, volume); }, 1.0, [1.0], [0.3]);
@@ -202,6 +200,9 @@ class PlayState extends luxe.State {
         drawableContext.levelWidth = levelW;
         drawableContext.levelHeight = levelH;
 
+        // OMG. Haxe have no `Map.clear()`
+        Luxe.scene.entities = new Map();
+
         var apple = new Entity({
             name: Entities.Apple
         });
@@ -217,7 +218,7 @@ class PlayState extends luxe.State {
         level.snake.direction = Direction.Left;
 
         requestedDirection = null;
-        paused = false;
+        updateContext.paused = false;
 
         eatenApples = 0;
         updateEatenApplesText();
@@ -304,7 +305,7 @@ class PlayState extends luxe.State {
 
     public override function onkeyup(e:KeyEvent) {
         if (e.keycode == Key.key_u) {
-            paused = !paused; // For screenshot/debug purposes
+            updateContext.paused = !updateContext.paused; // For screenshot/debug purposes
         }
         if (e.keycode == Key.escape) {
             Luxe.shutdown();
@@ -315,7 +316,7 @@ class PlayState extends luxe.State {
         var pos = randomMapPosition();
         while (level.get(pos.x, pos.y)
             || apple().pos.x == pos.x && apple().pos.y == pos.y
-            || level.powerUps.filter(function(p: Powerup) { return p.x == pos.x && p.y == pos.y; }).length != 0
+            || getPowerUpAt(pos.x, pos.y) != null
             || level.snake.body.filter(
                 function(segment) { return segment.x == pos.x && segment.y == pos.y; }).length != 0) {
             pos = randomMapPosition();
@@ -348,13 +349,11 @@ class PlayState extends luxe.State {
 
     override public function onrender() {
         drawMap();
-        drawPowerUps();
-        drawApple();
         drawSnake();
     }
 
     private function moveSnake(dt: Float) {
-        if (paused) {
+        if (updateContext.paused) {
             return;
         }
 
@@ -368,18 +367,10 @@ class PlayState extends luxe.State {
 
         // Generate powerups
         var powerUpChance = 1;//0.1;
-        if (level.powerUps.length == 0 && Luxe.utils.random.bool(powerUpChance)) {
-            var powerUp = new Powerup();
+        if (!hasPowerUp() && Luxe.utils.random.bool(powerUpChance)) {
+            var type = (Luxe.utils.random.bool(0.75)) ? PowerupType.SpeedUp(1.2) : PowerupType.SlowDown(1.2);
 
-            var position = randomEmptyMapPosition();
-            powerUp.x = position.x;
-            powerUp.y = position.y;
-
-            powerUp.timeToLive = 5.0;
-            powerUp.type = (Luxe.utils.random.bool(0.75)) ? PowerupType.SpeedUp(1.2) : PowerupType.SlowDown(1.2);
-            level.powerUps.push(powerUp);
-
-            powerUpColor = switch (powerUp.type) {
+            powerUpColor = switch (type) {
                 case SpeedUp(_):
                     POWER_UP_SPEED_UP_COLOR.clone();
                 case SlowDown(_):
@@ -387,28 +378,16 @@ class PlayState extends luxe.State {
                 default:
                     POWER_UP_UNKNOWN_COLOR.clone();
             };
-            powerUpDeadTime = Luxe.time + powerUp.timeToLive;
-            trace(Luxe.time);
-            trace(powerUp.timeToLive);
-            powerUpBlinkingTime = powerUpDeadTime - 2; // 2 sec before
-            powerUpBlinking = false;
-        }
-        if (level.powerUps.length != 0) {
-            var powerUp = level.powerUps[0];
 
-            if (Luxe.time > powerUpBlinkingTime && !powerUpBlinking) {
-                Actuate.tween(powerUpColor, 0.2, { a: 0.5 }).repeat().reflect();
-                powerUpBlinking = true;
-            }
-            if (Luxe.time > powerUpDeadTime) {
-                level.powerUps.remove(powerUp);
-                Actuate.stop(powerUpColor);
+            var powerUp = new Entity({
+                name: Entities.PowerUp
+            });
+            var position = randomEmptyMapPosition();
+            powerUp.pos.x = position.x;
+            powerUp.pos.y = position.y;
 
-                powerUpDeadTime = 0;
-                powerUpBlinkingTime = 0;
-                powerUpBlinking = false;
-                powerUpColor = null;
-            }
+            powerUp.add(new DrawableComponent(drawableContext, powerUpColor));
+            powerUp.add(new PowerUpBehavior(updateContext, 3.0, 5.0, type));
         }
 
         if (requestedDirection != null && canSnakeChangeDirectionTo(requestedDirection)) {
@@ -449,10 +428,10 @@ class PlayState extends luxe.State {
                 performSnakeMove(prevX, prevY);
 
                 // Check powerups
-                var powerUpsToEat = level.powerUps.filter(function(p: Powerup) { return p.x == newHeadX && p.y == newHeadY; });
-                if (powerUpsToEat.length > 0) {
-                    var powerUp = powerUpsToEat[0];
-                    switch (powerUp.type) {
+                var powerUp = getPowerUpAt(newHeadX, newHeadY);
+                if (powerUp != null) {
+                    var type = powerUp.get(Behaviors.PowerUp).type;
+                    switch (type) {
                         case SpeedUp(speedUpFactor):
                             naturalSnakeSpeed /= speedUpFactor;
                             updateSnakeSpeed();
@@ -461,11 +440,24 @@ class PlayState extends luxe.State {
                             updateSnakeSpeed();
                     }
 
-                    level.powerUps.remove(powerUp);
+                    Luxe.scene.entities.remove(Entities.PowerUp);
                 }
             }
         } else {
             states.enable(GameStates.GAME_OVER);
+        }
+    }
+
+    private function hasPowerUp() {
+        return Luxe.scene.entities.exists(Entities.PowerUp);
+    }
+
+    private function getPowerUpAt(x: Int, y: Int) {
+        var powerUp = Luxe.scene.entities.get(Entities.PowerUp);
+        if (powerUp != null && powerUp.pos.x == x && powerUp.pos.y == y) {
+            return powerUp;
+        } else {
+            return null;
         }
     }
 
@@ -536,20 +528,6 @@ class PlayState extends luxe.State {
                 }
             }
         }
-    }
-
-    private function drawPowerUps() {
-        var powerUps = level.powerUps;
-        if (powerUps.length == 0)
-            return;
-
-        for (i in 0...powerUps.length) {
-            drawPixel(powerUps[i].x, powerUps[i].y, powerUpColor);
-        }
-    }
-
-    private function drawApple() {
-        //drawPixel(level.appleX, level.appleY, APPLE_COLOR);
     }
 
     private function drawSnake() {

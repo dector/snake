@@ -19,10 +19,12 @@ class DrawableComponent extends Component {
     private static inline var PIXEL_SPACING = STYLE_2_ENABLED ? PIXEL_SPACING_STYLE_2 : PIXEL_SPACING_STYLE_1;
 
     var context: Context;
-    var color: Color;
+    public var color: Color;
 
     public function new(context: Context, color: Color) {
-        super();
+        super({
+            name: Components.Drawable
+        });
         this.context = context;
         this.color = color;
     }

@@ -6,12 +6,7 @@ class Level {
     private var w: Int;
     private var h: Int;
 
-//    public var appleX: Int;
-//    public var appleY: Int;
-
     public var snake: Snake;
-
-    public var powerUps: Array<Powerup>;
 
     public function new(w: Int, h: Int) {
         map = new Array();
@@ -28,8 +23,6 @@ class Level {
         var headX = Std.int(w / 2);
         var headY = Std.int(h / 2);
         snake.body = [ new Segment(headX, headY), new Segment(headX + 1, headY) ];
-
-        powerUps = [];
     }
 
     private function set(x: Int, y: Int, value: Bool) {

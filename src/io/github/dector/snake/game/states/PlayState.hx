@@ -104,6 +104,8 @@ class PlayState extends luxe.State {
     var powerUpDeadTime: Float;
     var powerUpBlinking: Bool;
 
+    var drawableContext = new Context();
+
     public function new(states: States) {
         super({ name: GameStates.PLAY });
         this.states = states;
@@ -192,17 +194,18 @@ class PlayState extends luxe.State {
     }
 
     private function createLevel() {
-        level = new Level(20, 15);
+        var levelW = 20;
+        var levelH = 15;
 
-//        level.appleX = pos.x;
-//        level.appleY = pos.y;
+        level = new Level(levelW, levelH);
+
+        drawableContext.levelWidth = levelW;
+        drawableContext.levelHeight = levelH;
 
         var apple = new Entity({
             name: Entities.Apple
         });
-        var appleDrawable = new DrawableComponent(APPLE_COLOR);
-        appleDrawable.levelWidth = level.width();
-        appleDrawable.levelHeight = level.height();
+        var appleDrawable = new DrawableComponent(drawableContext, APPLE_COLOR);
         apple.add(appleDrawable);
         var pos = randomEmptyMapPosition();
         apple.pos.set(pos.x, pos.y, 0, 0);

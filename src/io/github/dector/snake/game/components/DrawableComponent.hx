@@ -18,13 +18,12 @@ class DrawableComponent extends Component {
     private static inline var PIXEL_INNER_SIZE = STYLE_2_ENABLED ? PIXEL_SIZE_STYLE_2 : PIXEL_INNER_SIZE_STYLE_1;
     private static inline var PIXEL_SPACING = STYLE_2_ENABLED ? PIXEL_SPACING_STYLE_2 : PIXEL_SPACING_STYLE_1;
 
+    var context: Context;
     var color: Color;
 
-    public var levelWidth = 0;
-    public var levelHeight = 0;
-
-    public function new(color: Color) {
+    public function new(context: Context, color: Color) {
         super();
+        this.context = context;
         this.color = color;
     }
 
@@ -33,8 +32,8 @@ class DrawableComponent extends Component {
     }
 
     private function drawPixel(x: Int, y: Int, color: Color) {
-        var levelW = levelWidth * (PIXEL_SIZE + PIXEL_SPACING) + PIXEL_SPACING;
-        var levelH = levelHeight * (PIXEL_SIZE + PIXEL_SPACING) + PIXEL_SPACING;
+        var levelW = context.levelWidth * (PIXEL_SIZE + PIXEL_SPACING) + PIXEL_SPACING;
+        var levelH = context.levelHeight * (PIXEL_SIZE + PIXEL_SPACING) + PIXEL_SPACING;
 
         var x0 = (Luxe.screen.width - levelW) / 2;
         var y0 = (Luxe.screen.height - levelH) / 2;
@@ -60,5 +59,13 @@ class DrawableComponent extends Component {
             color: color
         });
     }
+}
 
+class Context {
+
+    public var levelWidth = 0;
+    public var levelHeight = 0;
+
+    public function new() {
+    }
 }

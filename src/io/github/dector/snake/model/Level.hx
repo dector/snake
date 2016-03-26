@@ -6,8 +6,8 @@ class Level {
     private var w: Int;
     private var h: Int;
 
-    public var appleX: Int;
-    public var appleY: Int;
+//    public var appleX: Int;
+//    public var appleY: Int;
 
     public var snake: Snake;
 

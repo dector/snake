@@ -1,5 +1,8 @@
 package io.github.dector.snake.game.states;
 
+import io.github.dector.snake.game.components.DrawableComponent;
+import io.github.dector.snake.game.entities.Entities;
+import luxe.Entity;
 import io.github.dector.snake.model.Segment;
 import io.github.dector.snake.resources.Assets;
 import io.github.dector.snake.model.Powerup;
@@ -191,9 +194,18 @@ class PlayState extends luxe.State {
     private function createLevel() {
         level = new Level(20, 15);
 
+//        level.appleX = pos.x;
+//        level.appleY = pos.y;
+
+        var apple = new Entity({
+            name: Entities.Apple
+        });
+        var appleDrawable = new DrawableComponent(APPLE_COLOR);
+        appleDrawable.levelWidth = level.width();
+        appleDrawable.levelHeight = level.height();
+        apple.add(appleDrawable);
         var pos = randomEmptyMapPosition();
-        level.appleX = pos.x;
-        level.appleY = pos.y;
+        apple.pos.set(pos.x, pos.y, 0, 0);
 
         moveTime = 0;
         naturalSnakeSpeed = if (SPEEDUP_SNAKE_SPEED) STARTING_SNAKE_SPEED else 0.17;
@@ -299,7 +311,7 @@ class PlayState extends luxe.State {
     private function randomEmptyMapPosition() {
         var pos = randomMapPosition();
         while (level.get(pos.x, pos.y)
-            || level.appleX == pos.x && level.appleY == pos.y
+            || apple().pos.x == pos.x && apple().pos.y == pos.y
             || level.powerUps.filter(function(p: Powerup) { return p.x == pos.x && p.y == pos.y; }).length != 0
             || level.snake.body.filter(
                 function(segment) { return segment.x == pos.x && segment.y == pos.y; }).length != 0) {
@@ -307,6 +319,10 @@ class PlayState extends luxe.State {
         }
 
         return pos;
+    }
+
+    private function apple() {
+        return Luxe.scene.entities.get(Entities.Apple);
     }
 
     private function randomMapPosition() {
@@ -451,7 +467,7 @@ class PlayState extends luxe.State {
     }
 
     private function isSnakeEatsApple(headX: Int, headY: Int) {
-        return headX == level.appleX && headY == level.appleY;
+        return headX == apple().pos.x && headY == apple().pos.y;
     }
 
     private function performEatApple(headX: Int, headY: Int) {
@@ -469,8 +485,8 @@ class PlayState extends luxe.State {
         level.snake.body.insert(1, new Segment(headX, headY));
 
         var pos = randomEmptyMapPosition();
-        level.appleX = pos.x;
-        level.appleY = pos.y;
+        apple().pos.x = pos.x;
+        apple().pos.y = pos.y;
     }
 
     private function performSnakeMove(prevX: Int, prevY: Int) {
@@ -530,7 +546,7 @@ class PlayState extends luxe.State {
     }
 
     private function drawApple() {
-        drawPixel(level.appleX, level.appleY, APPLE_COLOR);
+        //drawPixel(level.appleX, level.appleY, APPLE_COLOR);
     }
 
     private function drawSnake() {
